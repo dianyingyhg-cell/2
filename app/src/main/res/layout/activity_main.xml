@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button android:id="@+id/btnMaker" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="制作" />
+                <Button android:id="@+id/btnTemplates" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="模板" />
+                <Button android:id="@+id/btnMusic" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="音乐" />
+                <Button android:id="@+id/btnHistory" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="历史" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="1. 粘贴商品链接"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/etUrl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="商品链接"
+                android:inputType="textUri"
+                android:maxLines="1" />
+            <Button android:id="@+id/btnPaste" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="粘贴" />
+            <Button android:id="@+id/btnOpen" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="打开" />
+        </LinearLayout>
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="420dp"
+            android:layout_marginTop="6dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnCapture"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="截图并裁剪" />
+            <Button
+                android:id="@+id/btnQuickCapture"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="快速截(上次区域)" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnPickImage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="从相册选图" />
+            <Button
+                android:id="@+id/btnRecrop"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="重新裁剪" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="2. 加文字（预览里可拖动文字）"
+            android:textStyle="bold" />
+
+        <com.local.douyinmaker.ui.OverlayPreviewView
+            android:id="@+id/preview"
+            android:layout_width="match_parent"
+            android:layout_height="520dp"
+            android:layout_marginTop="6dp"
+            android:background="#111111" />
+
+        <EditText
+            android:id="@+id/etOverlayText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="例如：白拿30个垃圾袋\n嘿嘿"
+            android:gravity="top|start"
+            android:minLines="2" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnChooseTemplate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="选择模板" />
+            <Button
+                android:id="@+id/btnSaveTemplate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="保存当前模板" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/tvTextSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="字号：72" />
+        <SeekBar android:id="@+id/seekTextSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="90" android:progress="42" />
+
+        <TextView android:id="@+id/tvRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="旋转：-5°" />
+        <SeekBar android:id="@+id/seekRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="30" android:progress="10" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="3. 音乐和视频"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnChooseMusic"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="选择音乐" />
+            <TextView
+                android:id="@+id/tvMusic"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:padding="10dp"
+                android:text="未选择音乐" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="时长(秒)：" />
+            <EditText
+                android:id="@+id/etDuration"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:text="7.0" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="  支持 0.7～15 秒" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnGenerate"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="生成 MP4 并保存到相册"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="0" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="准备就绪" />
+
+    </LinearLayout>
+</ScrollView>
