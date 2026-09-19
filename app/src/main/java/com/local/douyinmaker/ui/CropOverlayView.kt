@@ -60,7 +60,13 @@ class CropOverlayView @JvmOverloads constructor(
         val top = (cropNorm.top * src.height).toInt().coerceIn(0, src.height - 1)
         val right = (cropNorm.right * src.width).toInt().coerceIn(left + 1, src.width)
         val bottom = (cropNorm.bottom * src.height).toInt().coerceIn(top + 1, src.height)
-        return Bitmap.createBitmap(src, left, top, right - left, bottom - top)
+        val cropped = Bitmap.createBitmap(src, left, top, right - left, bottom - top)
+        return if (cropped.config == Bitmap.Config.HARDWARE) {
+            cropped.copy(Bitmap.Config.ARGB_8888, false)
+                ?: error("无法转换裁剪图片格式")
+        } else {
+            cropped
+        }
     }
 
     override fun onDraw(canvas: Canvas) {

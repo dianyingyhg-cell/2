@@ -1,6 +1,7 @@
 package com.local.douyinmaker.data
 
 import android.content.Context
+import android.graphics.Color
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -32,7 +33,8 @@ object TemplateStore {
                 x = o.optDouble("x", 0.5).toFloat(),
                 y = o.optDouble("y", 0.45).toFloat(),
                 textSize = o.optDouble("textSize", 72.0).toFloat(),
-                rotation = o.optDouble("rotation", -5.0).toFloat()
+                rotation = o.optDouble("rotation", -5.0).toFloat(),
+                textColor = o.optInt("textColor", Color.RED)
             )
         }
         return out
@@ -43,7 +45,7 @@ object TemplateStore {
         list.forEach { t ->
             arr.put(JSONObject().apply {
                 put("id", t.id); put("name", t.name); put("text", t.text)
-                put("x", t.x); put("y", t.y); put("textSize", t.textSize); put("rotation", t.rotation)
+                put("x", t.x); put("y", t.y); put("textSize", t.textSize); put("rotation", t.rotation); put("textColor", t.textColor)
             })
         }
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, arr.toString()).apply()

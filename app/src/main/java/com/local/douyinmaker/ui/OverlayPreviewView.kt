@@ -45,6 +45,11 @@ class OverlayPreviewView @JvmOverloads constructor(
         invalidate()
     }
 
+    fun updateTextColor(color: Int) {
+        template.textColor = color
+        invalidate()
+    }
+
     fun currentTemplate(name: String = "当前模板"): TextTemplate = template.copy(name = name, text = overlayText)
 
     override fun onDraw(canvas: Canvas) {
@@ -107,7 +112,7 @@ class OverlayPreviewView @JvmOverloads constructor(
             paint.color = Color.BLACK
             canvas.drawText(line, cx, y, paint)
             paint.style = Paint.Style.FILL
-            paint.color = Color.WHITE
+            paint.color = template.textColor
             canvas.drawText(line, cx, y, paint)
         }
         canvas.restore()

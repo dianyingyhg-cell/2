@@ -9,18 +9,25 @@ object FrameComposer {
         val canvas = Canvas(out)
         canvas.drawColor(Color.BLACK)
 
-        val srcRatio = source.width.toFloat() / source.height
+        val safeSource = if (source.config == Bitmap.Config.HARDWARE) {
+            source.copy(Bitmap.Config.ARGB_8888, false)
+                ?: error("无法把截图转换为可渲染格式")
+        } else {
+            source
+        }
+
+        val srcRatio = safeSource.width.toFloat() / safeSource.height
         val dstRatio = width.toFloat() / height
         val srcRect = if (srcRatio > dstRatio) {
-            val cropW = (source.height * dstRatio).toInt()
-            val left = (source.width - cropW) / 2
-            Rect(left, 0, left + cropW, source.height)
+            val cropW = (safeSource.height * dstRatio).toInt()
+            val left = (safeSource.width - cropW) / 2
+            Rect(left, 0, left + cropW, safeSource.height)
         } else {
-            val cropH = (source.width / dstRatio).toInt()
-            val top = (source.height - cropH) / 2
-            Rect(0, top, source.width, top + cropH)
+            val cropH = (safeSource.width / dstRatio).toInt()
+            val top = (safeSource.height - cropH) / 2
+            Rect(0, top, safeSource.width, top + cropH)
         }
-        canvas.drawBitmap(source, srcRect, Rect(0, 0, width, height), Paint(Paint.ANTI_ALIAS_FLAG))
+        canvas.drawBitmap(safeSource, srcRect, Rect(0, 0, width, height), Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
@@ -45,7 +52,7 @@ object FrameComposer {
             paint.color = Color.BLACK
             canvas.drawText(line, cx, y, paint)
             paint.style = Paint.Style.FILL
-            paint.color = Color.WHITE
+            paint.color = template.textColor
             canvas.drawText(line, cx, y, paint)
         }
         canvas.restore()

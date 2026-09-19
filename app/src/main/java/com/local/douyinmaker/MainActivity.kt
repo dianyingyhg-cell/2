@@ -36,6 +36,7 @@ class MainActivity : Activity() {
     private lateinit var tvTextSize: TextView
     private lateinit var tvRotation: TextView
     private lateinit var btnGenerate: Button
+    private lateinit var spTextColor: Spinner
     private lateinit var spResolution: Spinner
     private lateinit var tvResolutionHint: TextView
 
@@ -48,6 +49,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         bindViews()
+        setupTextColorPicker()
         setupResolutionPicker()
         setupActions()
         applyTemplate(TemplateStore.load(this).first())
@@ -65,8 +67,28 @@ class MainActivity : Activity() {
         tvTextSize = findViewById(R.id.tvTextSize)
         tvRotation = findViewById(R.id.tvRotation)
         btnGenerate = findViewById(R.id.btnGenerate)
+        spTextColor = findViewById(R.id.spTextColor)
         spResolution = findViewById(R.id.spResolution)
         tvResolutionHint = findViewById(R.id.tvResolutionHint)
+    }
+
+    private fun setupTextColorPicker() {
+        val options = arrayOf("红色", "白色", "黄色", "绿色", "蓝色")
+        spTextColor.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
+        spTextColor.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                val color = when (position) {
+                    1 -> android.graphics.Color.WHITE
+                    2 -> android.graphics.Color.YELLOW
+                    3 -> android.graphics.Color.rgb(0, 200, 0)
+                    4 -> android.graphics.Color.rgb(0, 120, 255)
+                    else -> android.graphics.Color.RED
+                }
+                preview.updateTextColor(color)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+        spTextColor.setSelection(0)
     }
 
     private fun setupResolutionPicker() {
@@ -138,7 +160,10 @@ class MainActivity : Activity() {
             val uri = data?.data ?: return
             try {
                 val source = ImageDecoder.createSource(contentResolver, uri)
-                val bitmap = ImageDecoder.decodeBitmap(source) { decoder, _, _ -> decoder.isMutableRequired = false }
+                val bitmap = ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                    decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                    decoder.isMutableRequired = false
+                }
                 lastOriginalBitmap = bitmap
                 tvStatus.text = "截图已载入，请裁剪商品和价格区域"
                 showCropDialog(bitmap)
@@ -206,6 +231,15 @@ class MainActivity : Activity() {
         etText.setText(activeTemplate.text)
         seekTextSize.progress = (activeTemplate.textSize - 30f).toInt().coerceIn(0, 90)
         seekRotation.progress = (activeTemplate.rotation + 15f).toInt().coerceIn(0, 30)
+        spTextColor.setSelection(colorPosition(activeTemplate.textColor))
+    }
+
+    private fun colorPosition(color: Int): Int = when (color) {
+        android.graphics.Color.WHITE -> 1
+        android.graphics.Color.YELLOW -> 2
+        android.graphics.Color.rgb(0, 200, 0) -> 3
+        android.graphics.Color.rgb(0, 120, 255) -> 4
+        else -> 0
     }
 
     private fun saveCurrentTemplate() {
@@ -229,12 +263,9 @@ class MainActivity : Activity() {
     private fun chooseMusic() {
         val items = MusicStore.load(this)
         if (items.isEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle("音乐库为空")
-                .setMessage("先去音乐库导入你提供的音频或带音轨的视频。")
-                .setPositiveButton("打开音乐库") { _, _ -> startActivity(Intent(this, MusicActivity::class.java)) }
-                .setNegativeButton("取消", null)
-                .show()
+            selectedMusic = null
+            tvMusic.text = "不加音乐"
+            toast("音乐库为空，当前按无音乐生成，也可以正常保存")
             return
         }
         val labels = arrayOf("不加音乐") + items.map { it.name }.toTypedArray()
