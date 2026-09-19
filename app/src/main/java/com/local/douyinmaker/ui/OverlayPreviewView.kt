@@ -77,7 +77,7 @@ class OverlayPreviewView @JvmOverloads constructor(
             canvas.drawBitmap(bitmap, srcRect, contentRect, imagePaint)
         } ?: run {
             val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.LTGRAY; textSize = 42f; textAlign = Paint.Align.CENTER }
-            canvas.drawText("先截图或选一张商品图", contentRect.centerX(), contentRect.centerY(), p)
+            canvas.drawText("先选择一张商品截图", contentRect.centerX(), contentRect.centerY(), p)
         }
 
         drawOverlay(canvas)

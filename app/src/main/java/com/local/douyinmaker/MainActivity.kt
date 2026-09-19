@@ -2,23 +2,12 @@ package com.local.douyinmaker
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.ImageDecoder
-import android.graphics.RectF
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import android.view.View
 import android.view.ViewGroup
-import android.webkit.CookieManager
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.*
 import com.local.douyinmaker.data.CropStore
 import com.local.douyinmaker.data.MusicItem
@@ -36,9 +25,7 @@ class MainActivity : Activity() {
         private const val REQ_IMAGE = 201
     }
 
-    private lateinit var webView: WebView
     private lateinit var preview: OverlayPreviewView
-    private lateinit var etUrl: EditText
     private lateinit var etText: EditText
     private lateinit var etDuration: EditText
     private lateinit var tvMusic: TextView
@@ -49,6 +36,8 @@ class MainActivity : Activity() {
     private lateinit var tvTextSize: TextView
     private lateinit var tvRotation: TextView
     private lateinit var btnGenerate: Button
+    private lateinit var spResolution: Spinner
+    private lateinit var tvResolutionHint: TextView
 
     private var sourceBitmap: Bitmap? = null
     private var lastOriginalBitmap: Bitmap? = null
@@ -59,28 +48,13 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         bindViews()
-        setupWebView()
+        setupResolutionPicker()
         setupActions()
         applyTemplate(TemplateStore.load(this).first())
     }
 
-    @Suppress("SetJavaScriptEnabled")
-    private fun setupWebView() {
-        webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true
-        webView.settings.databaseEnabled = true
-        webView.settings.useWideViewPort = true
-        webView.settings.loadWithOverviewMode = true
-        CookieManager.getInstance().setAcceptCookie(true)
-        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
-        webView.webViewClient = WebViewClient()
-        webView.webChromeClient = WebChromeClient()
-    }
-
     private fun bindViews() {
-        webView = findViewById(R.id.webView)
         preview = findViewById(R.id.preview)
-        etUrl = findViewById(R.id.etUrl)
         etText = findViewById(R.id.etOverlayText)
         etDuration = findViewById(R.id.etDuration)
         tvMusic = findViewById(R.id.tvMusic)
@@ -91,6 +65,24 @@ class MainActivity : Activity() {
         tvTextSize = findViewById(R.id.tvTextSize)
         tvRotation = findViewById(R.id.tvRotation)
         btnGenerate = findViewById(R.id.btnGenerate)
+        spResolution = findViewById(R.id.spResolution)
+        tvResolutionHint = findViewById(R.id.tvResolutionHint)
+    }
+
+    private fun setupResolutionPicker() {
+        val options = arrayOf("1080P · 1080×1920", "4K · 2160×3840")
+        spResolution.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
+        spResolution.setSelection(0)
+        spResolution.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                tvResolutionHint.text = if (position == 0) {
+                    "1080P：1080×1920（推荐，生成更快）"
+                } else {
+                    "4K：2160×3840（更慢、更占空间；低端手机可能不支持4K编码）"
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
     }
 
     private fun setupActions() {
@@ -98,15 +90,11 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btnMusic).setOnClickListener { startActivity(Intent(this, MusicActivity::class.java)) }
         findViewById<Button>(R.id.btnHistory).setOnClickListener { startActivity(Intent(this, HistoryActivity::class.java)) }
 
-        findViewById<Button>(R.id.btnPaste).setOnClickListener { pasteLink() }
-        findViewById<Button>(R.id.btnOpen).setOnClickListener { openLink() }
-        findViewById<Button>(R.id.btnCapture).setOnClickListener { captureWebView(showCropEditor = true) }
-        findViewById<Button>(R.id.btnQuickCapture).setOnClickListener { captureWebView(showCropEditor = false) }
+        findViewById<Button>(R.id.btnPickImage).setOnClickListener { pickImage() }
         findViewById<Button>(R.id.btnRecrop).setOnClickListener {
             val original = lastOriginalBitmap ?: sourceBitmap
-            if (original == null) toast("先截图或选择图片") else showCropDialog(original)
+            if (original == null) toast("先选择商品截图") else showCropDialog(original)
         }
-        findViewById<Button>(R.id.btnPickImage).setOnClickListener { pickImage() }
         findViewById<Button>(R.id.btnChooseTemplate).setOnClickListener { chooseTemplate() }
         findViewById<Button>(R.id.btnSaveTemplate).setOnClickListener { saveCurrentTemplate() }
         findViewById<Button>(R.id.btnChooseMusic).setOnClickListener { chooseMusic() }
@@ -136,101 +124,6 @@ class MainActivity : Activity() {
         })
     }
 
-    private fun pasteLink() {
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val text = cm.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString().orEmpty()
-        if (text.isBlank()) toast("剪贴板没有文字") else etUrl.setText(extractUrl(text))
-    }
-
-    private fun extractUrl(text: String): String {
-        val match = Regex("https?://\\S+").find(text)?.value
-        return (match ?: text.trim()).trimEnd('。', '，', ',', ')', '）')
-    }
-
-    private fun openLink() {
-        var url = etUrl.text.toString().trim()
-        if (url.isBlank()) return toast("先粘贴商品链接")
-        if (!url.startsWith("http://") && !url.startsWith("https://")) url = "https://$url"
-        webView.loadUrl(url)
-        tvStatus.text = "已打开链接；滚动到想要的画面后点“截图当前画面”"
-    }
-
-    private fun captureWebView(showCropEditor: Boolean) {
-        if (webView.width <= 0 || webView.height <= 0) return toast("网页还没准备好")
-        val bitmap = Bitmap.createBitmap(webView.width, webView.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        webView.draw(canvas)
-        lastOriginalBitmap = bitmap
-
-        if (showCropEditor) {
-            showCropDialog(bitmap)
-        } else {
-            val saved = CropStore.load(this)
-            if (saved == null) {
-                toast("还没有保存过裁剪区域，先手动裁剪一次")
-                showCropDialog(bitmap)
-            } else {
-                sourceBitmap = cropBitmap(bitmap, saved)
-                preview.setSource(sourceBitmap)
-                tvStatus.text = "已按上次区域快速截图；可直接加字和生成视频"
-            }
-        }
-    }
-
-    private fun showCropDialog(bitmap: Bitmap) {
-        val density = resources.displayMetrics.density
-        val holder = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding((12 * density).toInt(), (8 * density).toInt(), (12 * density).toInt(), 0)
-        }
-        val hint = TextView(this).apply {
-            text = "拖动框内可移动；拖四个白点可调整大小。点“使用裁剪”后会记住这个区域。"
-            setPadding(0, 0, 0, (8 * density).toInt())
-        }
-        val cropView = CropOverlayView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                (520 * density).toInt()
-            )
-            setBitmap(bitmap, CropStore.load(this@MainActivity))
-        }
-        holder.addView(hint)
-        holder.addView(cropView)
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("裁剪商品画面")
-            .setView(holder)
-            .setNeutralButton("重置", null)
-            .setNegativeButton("取消", null)
-            .setPositiveButton("使用裁剪", null)
-            .create()
-
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { cropView.resetCrop() }
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                try {
-                    val rect = cropView.normalizedCrop()
-                    CropStore.save(this, rect)
-                    sourceBitmap = cropView.cropBitmap()
-                    preview.setSource(sourceBitmap)
-                    tvStatus.text = "裁剪完成，区域已记住；下次可点“快速截(上次区域)”"
-                    dialog.dismiss()
-                } catch (t: Throwable) {
-                    toast("裁剪失败：${t.message}")
-                }
-            }
-        }
-        dialog.show()
-    }
-
-    private fun cropBitmap(bitmap: Bitmap, rect: RectF): Bitmap {
-        val left = (rect.left * bitmap.width).toInt().coerceIn(0, bitmap.width - 1)
-        val top = (rect.top * bitmap.height).toInt().coerceIn(0, bitmap.height - 1)
-        val right = (rect.right * bitmap.width).toInt().coerceIn(left + 1, bitmap.width)
-        val bottom = (rect.bottom * bitmap.height).toInt().coerceIn(top + 1, bitmap.height)
-        return Bitmap.createBitmap(bitmap, left, top, right - left, bottom - top)
-    }
-
     private fun pickImage() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -247,12 +140,54 @@ class MainActivity : Activity() {
                 val source = ImageDecoder.createSource(contentResolver, uri)
                 val bitmap = ImageDecoder.decodeBitmap(source) { decoder, _, _ -> decoder.isMutableRequired = false }
                 lastOriginalBitmap = bitmap
+                tvStatus.text = "截图已载入，请裁剪商品和价格区域"
                 showCropDialog(bitmap)
-                tvStatus.text = "已载入图片，请选择裁剪区域"
             } catch (t: Throwable) {
                 toast("图片读取失败：${t.message}")
             }
         }
+    }
+
+    private fun showCropDialog(bitmap: Bitmap) {
+        val density = resources.displayMetrics.density
+        val holder = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((12 * density).toInt(), (8 * density).toInt(), (12 * density).toInt(), 0)
+        }
+        val hint = TextView(this).apply {
+            text = "把商品、券后价、规格等要展示的内容框进去。拖框内移动，拖四个白点调整大小。"
+            setPadding(0, 0, 0, (8 * density).toInt())
+        }
+        val cropView = CropOverlayView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (520 * density).toInt())
+            setBitmap(bitmap, CropStore.load(this@MainActivity))
+        }
+        holder.addView(hint)
+        holder.addView(cropView)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("裁剪商品截图")
+            .setView(holder)
+            .setNeutralButton("重置", null)
+            .setNegativeButton("取消", null)
+            .setPositiveButton("使用裁剪", null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { cropView.resetCrop() }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                try {
+                    CropStore.save(this, cropView.normalizedCrop())
+                    sourceBitmap = cropView.cropBitmap()
+                    preview.setSource(sourceBitmap)
+                    tvStatus.text = "截图已准备好：加文字、选音乐、设时长后生成视频"
+                    dialog.dismiss()
+                } catch (t: Throwable) {
+                    toast("裁剪失败：${t.message}")
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun chooseTemplate() {
@@ -310,34 +245,41 @@ class MainActivity : Activity() {
     }
 
     private fun generateVideo() {
-        val src = sourceBitmap ?: return toast("先截图或选择商品图片")
+        val src = sourceBitmap ?: return toast("先选择并裁剪商品截图")
         val seconds = etDuration.text.toString().toDoubleOrNull() ?: return toast("请输入正确的视频时长")
         if (seconds < 0.7 || seconds > 15.0) return toast("视频时长支持 0.7～15 秒")
+
+        val (outputWidth, outputHeight, label) = if (spResolution.selectedItemPosition == 1) {
+            Triple(2160, 3840, "4K")
+        } else {
+            Triple(1080, 1920, "1080P")
+        }
+
         val durationMs = (seconds * 1000).toLong()
         val template = preview.currentTemplate("导出").copy(text = etText.text.toString())
 
         btnGenerate.isEnabled = false
         progress.progress = 1
-        tvStatus.text = "正在准备画面…"
+        tvStatus.text = "正在准备 ${label} 画面…"
 
         Thread {
             try {
-                val frame = FrameComposer.compose(src, template, etText.text.toString())
+                val frame = FrameComposer.compose(src, template, etText.text.toString(), outputWidth, outputHeight)
                 runOnUiThread {
-                    tvStatus.text = "正在生成 MP4…"
+                    tvStatus.text = "正在生成 ${label} MP4…"
                     VideoExporter.export(this, frame, durationMs, selectedMusic,
                         VideoExporter.Callbacks(
                             onProgress = { value -> progress.progress = value },
-                            onSuccess = { uri ->
+                            onSuccess = {
                                 btnGenerate.isEnabled = true
                                 progress.progress = 100
-                                tvStatus.text = "完成：已保存到 Movies/DouyinLocalMaker"
-                                toast("视频已保存到相册")
+                                tvStatus.text = "完成：${label} · ${outputWidth}×${outputHeight}，已保存到相册"
+                                toast("${label} 视频已保存到相册")
                             },
                             onError = { error ->
                                 btnGenerate.isEnabled = true
                                 tvStatus.text = "生成失败：${error.message}"
-                                toast("生成失败：${error.message}")
+                                toast(if (label == "4K") "4K生成失败，手机可能不支持4K编码，可改用1080P" else "生成失败：${error.message}")
                             }
                         )
                     )
