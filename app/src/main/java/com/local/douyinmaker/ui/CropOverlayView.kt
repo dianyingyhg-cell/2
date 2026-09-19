@@ -190,8 +190,8 @@ class CropOverlayView @JvmOverloads constructor(
         abs(x - hx) <= threshold && abs(y - hy) <= threshold
 
     private fun defaultCrop(src: Bitmap): RectF {
-        // Centered 9:16 selection when possible, ideal for vertical short-video output.
-        val target = 9f / 16f
+        // Centered 9:20 selection when possible, matching modern full-screen phone screenshots.
+        val target = 9f / 20f
         val ratio = src.width.toFloat() / src.height.coerceAtLeast(1)
         return if (ratio > target) {
             val widthNorm = (target / ratio).coerceIn(0.1f, 1f)

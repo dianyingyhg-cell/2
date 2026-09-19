@@ -16,18 +16,25 @@ object FrameComposer {
             source
         }
 
-        val srcRatio = safeSource.width.toFloat() / safeSource.height
+        // FIT_CENTER instead of center-crop.
+        // This preserves every pixel the user selected in the crop editor.
+        val srcRatio = safeSource.width.toFloat() / safeSource.height.coerceAtLeast(1)
         val dstRatio = width.toFloat() / height
-        val srcRect = if (srcRatio > dstRatio) {
-            val cropW = (safeSource.height * dstRatio).toInt()
-            val left = (safeSource.width - cropW) / 2
-            Rect(left, 0, left + cropW, safeSource.height)
+        val dstRect = if (srcRatio > dstRatio) {
+            val drawH = width / srcRatio
+            val top = (height - drawH) / 2f
+            RectF(0f, top, width.toFloat(), top + drawH)
         } else {
-            val cropH = (safeSource.width / dstRatio).toInt()
-            val top = (safeSource.height - cropH) / 2
-            Rect(0, top, safeSource.width, top + cropH)
+            val drawW = height * srcRatio
+            val left = (width - drawW) / 2f
+            RectF(left, 0f, left + drawW, height.toFloat())
         }
-        canvas.drawBitmap(safeSource, srcRect, Rect(0, 0, width, height), Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+        canvas.drawBitmap(
+            safeSource,
+            null,
+            dstRect,
+            Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        )
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE

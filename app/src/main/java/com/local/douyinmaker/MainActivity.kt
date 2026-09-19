@@ -92,15 +92,15 @@ class MainActivity : Activity() {
     }
 
     private fun setupResolutionPicker() {
-        val options = arrayOf("1080P · 1080×1920", "4K · 2160×3840")
+        val options = arrayOf("1080全屏 · 1080×2400", "4K级全屏 · 2160×4800")
         spResolution.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
         spResolution.setSelection(0)
         spResolution.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 tvResolutionHint.text = if (position == 0) {
-                    "1080P：1080×1920（推荐，生成更快）"
+                    "1080全屏：1080×2400（9:20，推荐，完整保留手机截图）"
                 } else {
-                    "4K：2160×3840（更慢、更占空间；低端手机可能不支持4K编码）"
+                    "4K级全屏：2160×4800（9:20，更慢、更占空间；部分手机可能不支持）"
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -281,9 +281,9 @@ class MainActivity : Activity() {
         if (seconds < 0.7 || seconds > 15.0) return toast("视频时长支持 0.7～15 秒")
 
         val (outputWidth, outputHeight, label) = if (spResolution.selectedItemPosition == 1) {
-            Triple(2160, 3840, "4K")
+            Triple(2160, 4800, "4K级全屏")
         } else {
-            Triple(1080, 1920, "1080P")
+            Triple(1080, 2400, "1080全屏")
         }
 
         val durationMs = (seconds * 1000).toLong()
@@ -310,7 +310,7 @@ class MainActivity : Activity() {
                             onError = { error ->
                                 btnGenerate.isEnabled = true
                                 tvStatus.text = "生成失败：${error.message}"
-                                toast(if (label == "4K") "4K生成失败，手机可能不支持4K编码，可改用1080P" else "生成失败：${error.message}")
+                                toast(if (label == "4K级全屏") "4K级全屏生成失败，手机可能不支持2160×4800编码，可改用1080全屏" else "生成失败：${error.message}")
                             }
                         )
                     )

@@ -55,7 +55,7 @@ class OverlayPreviewView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawColor(Color.rgb(18, 18, 18))
-        val targetRatio = 9f / 16f
+        val targetRatio = 9f / 20f
         val viewRatio = width.toFloat() / height.coerceAtLeast(1)
         contentRect = if (viewRatio > targetRatio) {
             val w = height * targetRatio
@@ -68,18 +68,19 @@ class OverlayPreviewView @JvmOverloads constructor(
         }
 
         source?.let { bitmap ->
-            val srcRatio = bitmap.width.toFloat() / bitmap.height
+            // FIT_CENTER: preview exactly matches export and never silently crops the selected screenshot.
+            val srcRatio = bitmap.width.toFloat() / bitmap.height.coerceAtLeast(1)
             val dstRatio = contentRect.width() / contentRect.height()
-            val srcRect = if (srcRatio > dstRatio) {
-                val cropW = (bitmap.height * dstRatio).toInt()
-                val left = (bitmap.width - cropW) / 2
-                Rect(left, 0, left + cropW, bitmap.height)
+            val drawRect = if (srcRatio > dstRatio) {
+                val drawH = contentRect.width() / srcRatio
+                val top = contentRect.centerY() - drawH / 2f
+                RectF(contentRect.left, top, contentRect.right, top + drawH)
             } else {
-                val cropH = (bitmap.width / dstRatio).toInt()
-                val top = (bitmap.height - cropH) / 2
-                Rect(0, top, bitmap.width, top + cropH)
+                val drawW = contentRect.height() * srcRatio
+                val left = contentRect.centerX() - drawW / 2f
+                RectF(left, contentRect.top, left + drawW, contentRect.bottom)
             }
-            canvas.drawBitmap(bitmap, srcRect, contentRect, imagePaint)
+            canvas.drawBitmap(bitmap, null, drawRect, imagePaint)
         } ?: run {
             val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.LTGRAY; textSize = 42f; textAlign = Paint.Align.CENTER }
             canvas.drawText("先选择一张商品截图", contentRect.centerX(), contentRect.centerY(), p)
