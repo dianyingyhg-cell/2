@@ -54,8 +54,7 @@ object FrameComposer {
         padYPx: Float
     ) {
         val value = text.ifBlank { " " }
-        val lines = value.split("
-")
+        val lines = value.lines()
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = textColor
             textAlign = Paint.Align.CENTER

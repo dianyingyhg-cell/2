@@ -98,10 +98,8 @@ object TemplateStore {
                     )
                 } else {
                     // 兼容 V0.5 老模板
-                    val legacyText = o.optString("text", "白拿{商品}
-嘿嘿")
-                    val lines = legacyText.split("
-").filter { it.isNotBlank() }
+                    val legacyText = o.optString("text", "白拿{商品}\n嘿嘿")
+                    val lines = legacyText.lines().filter { it.isNotBlank() }
                     val main = lines.firstOrNull() ?: "白拿{商品}"
                     val sub = if (lines.size >= 2) lines.drop(1).joinToString(" ") else "hhh"
                     val x = o.optDouble("x", 0.50).toFloat()

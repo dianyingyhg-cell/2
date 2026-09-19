@@ -120,8 +120,7 @@ class OverlayPreviewView @JvmOverloads constructor(
         baseScale: Float
     ): RectF {
         val value = text.ifBlank { " " }
-        val lines = value.split("
-")
+        val lines = value.lines()
         val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = textColor
             textAlign = Paint.Align.CENTER

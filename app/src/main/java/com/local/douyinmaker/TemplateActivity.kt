@@ -30,8 +30,7 @@ class TemplateActivity : Activity() {
     private fun reload() {
         templates = TemplateStore.load(this)
         val rows = templates.map {
-            "${it.name}
-主：${it.mainText} · ${it.mainTextSize.toInt()}   副：${it.subText} · ${it.subTextSize.toInt()}"
+            "${it.name}\n主：${it.mainText} · ${it.mainTextSize.toInt()}   副：${it.subText} · ${it.subTextSize.toInt()}"
         }
         listView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rows)
     }
