@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.local.douyinmaker"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.local.douyinmaker"
