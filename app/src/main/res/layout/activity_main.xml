@@ -63,7 +63,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="2. 加文字（预览里可拖动）"
+            android:text="2. 双贴纸标题（拖动两个红块）"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -74,13 +74,35 @@
             android:layout_marginTop="6dp"
             android:background="#111111" />
 
-        <EditText
-            android:id="@+id/etOverlayText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="top|start"
-            android:hint="例如：白拿30个垃圾袋&#10;嘿嘿"
-            android:minLines="2" />
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnPresetRef"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="套用参考图1" />
+            <Button
+                android:id="@+id/btnPresetAlt"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="套用垃圾袋版" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/etMainText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="主标题，例如：白拿一个手机支架" />
+
+        <EditText
+            android:id="@+id/etSubText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="副标题，例如：hhh" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -100,30 +122,23 @@
                 android:text="保存当前模板" />
         </LinearLayout>
 
-        <TextView android:id="@+id/tvTextSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="字号：72" />
-        <SeekBar android:id="@+id/seekTextSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="90" android:progress="42" />
+        <TextView android:id="@+id/tvMainSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="主标题字号：104" />
+        <SeekBar android:id="@+id/seekMainSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="54" />
 
-        <TextView android:id="@+id/tvRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="旋转：-5°" />
-        <SeekBar android:id="@+id/seekRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="30" android:progress="10" />
+        <TextView android:id="@+id/tvSubSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="副标题字号：84" />
+        <SeekBar android:id="@+id/seekSubSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="44" />
 
-        <LinearLayout
+        <TextView android:id="@+id/tvMainRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="主标题旋转：-7°" />
+        <SeekBar android:id="@+id/seekMainRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="40" android:progress="13" />
+
+        <TextView android:id="@+id/tvSubRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="副标题旋转：-7°" />
+        <SeekBar android:id="@+id/seekSubRotation" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="40" android:progress="13" />
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="字体颜色：" />
-            <Spinner
-                android:id="@+id/spTextColor"
-                android:layout_width="180dp"
-                android:layout_height="wrap_content" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="  默认红色" />
-        </LinearLayout>
+            android:paddingTop="4dp"
+            android:text="默认样式：红底白字，位置和大小按你给的达人图做了预设。" />
 
         <TextView
             android:layout_width="match_parent"
@@ -183,7 +198,7 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="输出：" />
             <Spinner
                 android:id="@+id/spResolution"
-                android:layout_width="220dp"
+                android:layout_width="230dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
 

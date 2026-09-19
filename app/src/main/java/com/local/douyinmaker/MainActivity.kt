@@ -21,86 +21,72 @@ import com.local.douyinmaker.util.FrameComposer
 import java.util.UUID
 
 class MainActivity : Activity() {
-    companion object {
-        private const val REQ_IMAGE = 201
-    }
+    companion object { private const val REQ_IMAGE = 201 }
 
     private lateinit var preview: OverlayPreviewView
-    private lateinit var etText: EditText
+    private lateinit var etMainText: EditText
+    private lateinit var etSubText: EditText
     private lateinit var etDuration: EditText
     private lateinit var tvMusic: TextView
     private lateinit var tvStatus: TextView
     private lateinit var progress: ProgressBar
-    private lateinit var seekTextSize: SeekBar
-    private lateinit var seekRotation: SeekBar
-    private lateinit var tvTextSize: TextView
-    private lateinit var tvRotation: TextView
+    private lateinit var seekMainSize: SeekBar
+    private lateinit var seekSubSize: SeekBar
+    private lateinit var seekMainRotation: SeekBar
+    private lateinit var seekSubRotation: SeekBar
+    private lateinit var tvMainSize: TextView
+    private lateinit var tvSubSize: TextView
+    private lateinit var tvMainRotation: TextView
+    private lateinit var tvSubRotation: TextView
     private lateinit var btnGenerate: Button
-    private lateinit var spTextColor: Spinner
     private lateinit var spResolution: Spinner
     private lateinit var tvResolutionHint: TextView
 
     private var sourceBitmap: Bitmap? = null
     private var lastOriginalBitmap: Bitmap? = null
     private var selectedMusic: MusicItem? = null
-    private var activeTemplate = TextTemplate(UUID.randomUUID().toString(), "当前", "白拿{商品}\n嘿嘿")
+    private var activeTemplate = referenceTemplate()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         bindViews()
-        setupTextColorPicker()
-        setupResolutionPicker()
+        setupSpinners()
         setupActions()
-        applyTemplate(TemplateStore.load(this).first())
+        applyTemplate(activeTemplate)
     }
 
     private fun bindViews() {
         preview = findViewById(R.id.preview)
-        etText = findViewById(R.id.etOverlayText)
+        etMainText = findViewById(R.id.etMainText)
+        etSubText = findViewById(R.id.etSubText)
         etDuration = findViewById(R.id.etDuration)
         tvMusic = findViewById(R.id.tvMusic)
         tvStatus = findViewById(R.id.tvStatus)
         progress = findViewById(R.id.progress)
-        seekTextSize = findViewById(R.id.seekTextSize)
-        seekRotation = findViewById(R.id.seekRotation)
-        tvTextSize = findViewById(R.id.tvTextSize)
-        tvRotation = findViewById(R.id.tvRotation)
+        seekMainSize = findViewById(R.id.seekMainSize)
+        seekSubSize = findViewById(R.id.seekSubSize)
+        seekMainRotation = findViewById(R.id.seekMainRotation)
+        seekSubRotation = findViewById(R.id.seekSubRotation)
+        tvMainSize = findViewById(R.id.tvMainSize)
+        tvSubSize = findViewById(R.id.tvSubSize)
+        tvMainRotation = findViewById(R.id.tvMainRotation)
+        tvSubRotation = findViewById(R.id.tvSubRotation)
         btnGenerate = findViewById(R.id.btnGenerate)
-        spTextColor = findViewById(R.id.spTextColor)
         spResolution = findViewById(R.id.spResolution)
         tvResolutionHint = findViewById(R.id.tvResolutionHint)
     }
 
-    private fun setupTextColorPicker() {
-        val options = arrayOf("红色", "白色", "黄色", "绿色", "蓝色")
-        spTextColor.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
-        spTextColor.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
-                val color = when (position) {
-                    1 -> android.graphics.Color.WHITE
-                    2 -> android.graphics.Color.YELLOW
-                    3 -> android.graphics.Color.rgb(0, 200, 0)
-                    4 -> android.graphics.Color.rgb(0, 120, 255)
-                    else -> android.graphics.Color.RED
-                }
-                preview.updateTextColor(color)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-        spTextColor.setSelection(0)
-    }
-
-    private fun setupResolutionPicker() {
+    private fun setupSpinners() {
         val options = arrayOf("1080全屏 · 1080×2400", "4K级全屏 · 2160×4800")
         spResolution.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
         spResolution.setSelection(0)
         spResolution.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 tvResolutionHint.text = if (position == 0) {
-                    "1080全屏：1080×2400（9:20，推荐，完整保留手机截图）"
+                    "1080全屏：1080×2400（9:20，推荐）"
                 } else {
-                    "4K级全屏：2160×4800（9:20，更慢、更占空间；部分手机可能不支持）"
+                    "4K级全屏：2160×4800（更大更慢，部分手机可能不支持）"
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -120,31 +106,73 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btnChooseTemplate).setOnClickListener { chooseTemplate() }
         findViewById<Button>(R.id.btnSaveTemplate).setOnClickListener { saveCurrentTemplate() }
         findViewById<Button>(R.id.btnChooseMusic).setOnClickListener { chooseMusic() }
+        findViewById<Button>(R.id.btnPresetRef).setOnClickListener { applyTemplate(referenceTemplate()) }
+        findViewById<Button>(R.id.btnPresetAlt).setOnClickListener { applyTemplate(referenceTemplateAlt()) }
         btnGenerate.setOnClickListener { generateVideo() }
 
-        etText.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) preview.updateText(etText.text.toString()) }
-        etText.addTextChangedListener(SimpleTextWatcher { preview.updateText(it) })
+        etMainText.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) preview.updateMainText(etMainText.text.toString()) }
+        etSubText.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) preview.updateSubText(etSubText.text.toString()) }
+        etMainText.addTextChangedListener(SimpleTextWatcher { preview.updateMainText(it) })
+        etSubText.addTextChangedListener(SimpleTextWatcher { preview.updateSubText(it) })
 
-        seekTextSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        seekMainSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
-                val size = 30f + value
-                tvTextSize.text = "字号：${size.toInt()}"
-                preview.updateTextSize(size)
+                val size = 50f + value
+                tvMainSize.text = "主标题字号：${size.toInt()}"
+                preview.updateMainTextSize(size)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        seekRotation.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        seekSubSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
-                val degrees = value - 15f
-                tvRotation.text = "旋转：${degrees.toInt()}°"
-                preview.updateRotation(degrees)
+                val size = 40f + value
+                tvSubSize.text = "副标题字号：${size.toInt()}"
+                preview.updateSubTextSize(size)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        seekMainRotation.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
+                val degrees = value - 20f
+                tvMainRotation.text = "主标题旋转：${degrees.toInt()}°"
+                preview.updateMainRotation(degrees)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        seekSubRotation.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
+                val degrees = value - 20f
+                tvSubRotation.text = "副标题旋转：${degrees.toInt()}°"
+                preview.updateSubRotation(degrees)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
     }
+
+    private fun referenceTemplate(): TextTemplate = TextTemplate(
+        id = UUID.randomUUID().toString(),
+        name = "参考图1·红底白字",
+        mainText = "白拿一个手机支架",
+        subText = "hhh",
+        mainX = 0.50f, mainY = 0.45f, mainTextSize = 104f, mainRotation = -7f,
+        subX = 0.47f, subY = 0.58f, subTextSize = 84f, subRotation = -7f
+    )
+
+    private fun referenceTemplateAlt(): TextTemplate = TextTemplate(
+        id = UUID.randomUUID().toString(),
+        name = "参考图1·垃圾袋",
+        mainText = "白拿垃圾袋",
+        subText = "嘿嘿",
+        mainX = 0.50f, mainY = 0.43f, mainTextSize = 108f, mainRotation = -6f,
+        subX = 0.49f, subY = 0.56f, subTextSize = 88f, subRotation = -6f
+    )
 
     private fun pickImage() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -180,7 +208,7 @@ class MainActivity : Activity() {
             setPadding((12 * density).toInt(), (8 * density).toInt(), (12 * density).toInt(), 0)
         }
         val hint = TextView(this).apply {
-            text = "把商品、券后价、规格等要展示的内容框进去。拖框内移动，拖四个白点调整大小。"
+            text = "把商品、券后价、规格等要展示的内容框进去。默认是 9:20 裁剪框。"
             setPadding(0, 0, 0, (8 * density).toInt())
         }
         val cropView = CropOverlayView(this).apply {
@@ -205,7 +233,7 @@ class MainActivity : Activity() {
                     CropStore.save(this, cropView.normalizedCrop())
                     sourceBitmap = cropView.cropBitmap()
                     preview.setSource(sourceBitmap)
-                    tvStatus.text = "截图已准备好：加文字、选音乐、设时长后生成视频"
+                    tvStatus.text = "截图已准备好：拖动两个红底贴纸即可排版"
                     dialog.dismiss()
                 } catch (t: Throwable) {
                     toast("裁剪失败：${t.message}")
@@ -228,28 +256,22 @@ class MainActivity : Activity() {
     private fun applyTemplate(t: TextTemplate) {
         activeTemplate = t.copy()
         preview.setTemplate(activeTemplate)
-        etText.setText(activeTemplate.text)
-        seekTextSize.progress = (activeTemplate.textSize - 30f).toInt().coerceIn(0, 90)
-        seekRotation.progress = (activeTemplate.rotation + 15f).toInt().coerceIn(0, 30)
-        spTextColor.setSelection(colorPosition(activeTemplate.textColor))
-    }
-
-    private fun colorPosition(color: Int): Int = when (color) {
-        android.graphics.Color.WHITE -> 1
-        android.graphics.Color.YELLOW -> 2
-        android.graphics.Color.rgb(0, 200, 0) -> 3
-        android.graphics.Color.rgb(0, 120, 255) -> 4
-        else -> 0
+        etMainText.setText(activeTemplate.mainText)
+        etSubText.setText(activeTemplate.subText)
+        seekMainSize.progress = (activeTemplate.mainTextSize - 50f).toInt().coerceIn(0, 100)
+        seekSubSize.progress = (activeTemplate.subTextSize - 40f).toInt().coerceIn(0, 100)
+        seekMainRotation.progress = (activeTemplate.mainRotation + 20f).toInt().coerceIn(0, 40)
+        seekSubRotation.progress = (activeTemplate.subRotation + 20f).toInt().coerceIn(0, 40)
     }
 
     private fun saveCurrentTemplate() {
         val input = EditText(this).apply { hint = "模板名称" }
         AlertDialog.Builder(this)
-            .setTitle("保存当前文字样式")
+            .setTitle("保存当前模板")
             .setView(input)
             .setPositiveButton("保存") { _, _ ->
                 val name = input.text.toString().ifBlank { "模板${System.currentTimeMillis() % 10000}" }
-                val t = preview.currentTemplate(name).copy(id = UUID.randomUUID().toString(), text = etText.text.toString())
+                val t = preview.currentTemplate(name).copy(id = UUID.randomUUID().toString())
                 val all = TemplateStore.load(this)
                 all += t
                 TemplateStore.save(this, all)
@@ -265,7 +287,7 @@ class MainActivity : Activity() {
         if (items.isEmpty()) {
             selectedMusic = null
             tvMusic.text = "不加音乐"
-            toast("音乐库为空，当前按无音乐生成，也可以正常保存")
+            toast("音乐库为空，当前按无音乐生成")
             return
         }
         val labels = arrayOf("不加音乐") + items.map { it.name }.toTypedArray()
@@ -287,7 +309,10 @@ class MainActivity : Activity() {
         }
 
         val durationMs = (seconds * 1000).toLong()
-        val template = preview.currentTemplate("导出").copy(text = etText.text.toString())
+        val template = preview.currentTemplate("导出").copy(
+            mainText = etMainText.text.toString(),
+            subText = etSubText.text.toString()
+        )
 
         btnGenerate.isEnabled = false
         progress.progress = 1
@@ -295,7 +320,7 @@ class MainActivity : Activity() {
 
         Thread {
             try {
-                val frame = FrameComposer.compose(src, template, etText.text.toString(), outputWidth, outputHeight)
+                val frame = FrameComposer.compose(src, template, outputWidth, outputHeight)
                 runOnUiThread {
                     tvStatus.text = "正在生成 ${label} MP4…"
                     VideoExporter.export(this, frame, durationMs, selectedMusic,
@@ -310,7 +335,7 @@ class MainActivity : Activity() {
                             onError = { error ->
                                 btnGenerate.isEnabled = true
                                 tvStatus.text = "生成失败：${error.message}"
-                                toast(if (label == "4K级全屏") "4K级全屏生成失败，手机可能不支持2160×4800编码，可改用1080全屏" else "生成失败：${error.message}")
+                                toast(if (label == "4K级全屏") "4K级全屏生成失败，手机可能不支持 2160×4800 编码，可改用1080全屏" else "生成失败：${error.message}")
                             }
                         )
                     )
