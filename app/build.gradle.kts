@@ -15,12 +15,17 @@ android {
         versionName = "0.2.0"
     }
 
-    buildFeatures {
-        viewBinding = false
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    buildFeatures {
+        viewBinding = false
     }
 }
 
