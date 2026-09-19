@@ -30,13 +30,15 @@ object FrameComposer {
             canvas, template.mainText, template.mainX * width, template.mainY * height,
             template.mainTextSize * (width / 360f), template.mainRotation,
             template.mainTextColor, template.mainBgColor,
-            template.mainPadX * (width / 360f), template.mainPadY * (width / 360f)
+            template.mainPadX * (width / 360f), template.mainPadY * (width / 360f),
+            width * 0.88f
         )
         drawSticker(
             canvas, template.subText, template.subX * width, template.subY * height,
             template.subTextSize * (width / 360f), template.subRotation,
             template.subTextColor, template.subBgColor,
-            template.subPadX * (width / 360f), template.subPadY * (width / 360f)
+            template.subPadX * (width / 360f), template.subPadY * (width / 360f),
+            width * 0.52f
         )
         return out
     }
@@ -51,7 +53,8 @@ object FrameComposer {
         textColor: Int,
         bgColor: Int,
         padXPx: Float,
-        padYPx: Float
+        padYPx: Float,
+        maxBoxWidth: Float
     ) {
         val value = text.ifBlank { " " }
         val lines = value.lines()
@@ -65,16 +68,28 @@ object FrameComposer {
             color = bgColor
             setShadowLayer(14f, 0f, 5f, 0x30000000)
         }
+
+        var hPad = padXPx
+        var vPad = padYPx
+        var measuredWidth = lines.maxOfOrNull { textPaint.measureText(it) } ?: 0f
+        val requestedBoxWidth = measuredWidth + hPad * 2f
+        if (requestedBoxWidth > maxBoxWidth && requestedBoxWidth > 0f) {
+            val scaleDown = maxBoxWidth / requestedBoxWidth
+            textPaint.textSize *= scaleDown
+            hPad *= scaleDown
+            vPad *= scaleDown
+            measuredWidth = lines.maxOfOrNull { textPaint.measureText(it) } ?: 0f
+        }
+
         val lineHeight = textPaint.textSize * 1.10f
-        val maxWidth = lines.maxOfOrNull { textPaint.measureText(it) } ?: 0f
-        val boxW = maxWidth + padXPx * 2f
-        val boxH = lineHeight * lines.size + padYPx * 2f
+        val boxW = measuredWidth + hPad * 2f
+        val boxH = lineHeight * lines.size + vPad * 2f
         val rect = RectF(centerX - boxW / 2f, centerY - boxH / 2f, centerX + boxW / 2f, centerY + boxH / 2f)
 
         canvas.save()
         canvas.rotate(rotation, centerX, centerY)
         canvas.drawRoundRect(rect, 14f, 14f, bgPaint)
-        var y = rect.top + padYPx + textPaint.textSize
+        var y = rect.top + vPad + textPaint.textSize
         lines.forEach {
             canvas.drawText(it, centerX, y, textPaint)
             y += lineHeight

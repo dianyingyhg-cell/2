@@ -161,8 +161,8 @@ class MainActivity : Activity() {
         name = "参考图1·红底白字",
         mainText = "白拿一个手机支架",
         subText = "hhh",
-        mainX = 0.50f, mainY = 0.45f, mainTextSize = 104f, mainRotation = -7f,
-        subX = 0.47f, subY = 0.58f, subTextSize = 84f, subRotation = -7f
+        mainX = 0.50f, mainY = 0.38f, mainTextSize = 96f, mainRotation = -7f,
+        subX = 0.50f, subY = 0.50f, subTextSize = 78f, subRotation = -7f
     )
 
     private fun referenceTemplateAlt(): TextTemplate = TextTemplate(
@@ -170,8 +170,8 @@ class MainActivity : Activity() {
         name = "参考图1·垃圾袋",
         mainText = "白拿垃圾袋",
         subText = "嘿嘿",
-        mainX = 0.50f, mainY = 0.43f, mainTextSize = 108f, mainRotation = -6f,
-        subX = 0.49f, subY = 0.56f, subTextSize = 88f, subRotation = -6f
+        mainX = 0.50f, mainY = 0.38f, mainTextSize = 100f, mainRotation = -6f,
+        subX = 0.50f, subY = 0.50f, subTextSize = 82f, subRotation = -6f
     )
 
     private fun pickImage() {

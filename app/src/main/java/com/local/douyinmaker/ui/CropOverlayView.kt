@@ -41,7 +41,7 @@ class CropOverlayView @JvmOverloads constructor(
 
     fun setBitmap(value: Bitmap, initialCrop: RectF? = null) {
         bitmap = value
-        cropNorm = initialCrop?.let { sanitize(it) } ?: defaultCrop(value)
+        cropNorm = initialCrop?.let { enforceAspect(sanitize(it), value) } ?: defaultCrop(value)
         invalidate()
     }
 
@@ -183,11 +183,39 @@ class CropOverlayView @JvmOverloads constructor(
             }
             DragMode.NONE -> Unit
         }
-        cropNorm = RectF(l, t, r, b)
+        val raw = RectF(l, t, r, b)
+        cropNorm = if (mode == DragMode.MOVE) raw else {
+            val src = bitmap
+            if (src != null) enforceAspect(raw, src) else raw
+        }
     }
 
     private fun near(x: Float, y: Float, hx: Float, hy: Float, threshold: Float): Boolean =
         abs(x - hx) <= threshold && abs(y - hy) <= threshold
+
+    private fun enforceAspect(input: RectF, src: Bitmap): RectF {
+        val targetPixelRatio = 9f / 20f
+        val srcRatio = src.width.toFloat() / src.height.coerceAtLeast(1)
+        val targetNormRatio = targetPixelRatio / srcRatio
+
+        var cx = input.centerX().coerceIn(0f, 1f)
+        var cy = input.centerY().coerceIn(0f, 1f)
+        var w = input.width().coerceAtLeast(minNormSize)
+        var h = w / targetNormRatio
+
+        if (h > 1f) {
+            h = 1f
+            w = h * targetNormRatio
+        }
+        if (w > 1f) {
+            w = 1f
+            h = w / targetNormRatio
+        }
+
+        cx = cx.coerceIn(w / 2f, 1f - w / 2f)
+        cy = cy.coerceIn(h / 2f, 1f - h / 2f)
+        return RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f)
+    }
 
     private fun defaultCrop(src: Bitmap): RectF {
         // Centered 9:20 selection when possible, matching modern full-screen phone screenshots.

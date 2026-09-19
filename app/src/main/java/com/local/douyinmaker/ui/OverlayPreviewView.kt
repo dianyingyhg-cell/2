@@ -89,7 +89,8 @@ class OverlayPreviewView @JvmOverloads constructor(
             bgColor = template.mainBgColor,
             padX = template.mainPadX,
             padY = template.mainPadY,
-            baseScale = baseScale
+            baseScale = baseScale,
+            maxWidthFraction = 0.88f
         )
         subRect = drawSticker(
             canvas = canvas,
@@ -102,7 +103,8 @@ class OverlayPreviewView @JvmOverloads constructor(
             bgColor = template.subBgColor,
             padX = template.subPadX,
             padY = template.subPadY,
-            baseScale = baseScale
+            baseScale = baseScale,
+            maxWidthFraction = 0.52f
         )
     }
 
@@ -117,7 +119,8 @@ class OverlayPreviewView @JvmOverloads constructor(
         bgColor: Int,
         padX: Float,
         padY: Float,
-        baseScale: Float
+        baseScale: Float,
+        maxWidthFraction: Float
     ): RectF {
         val value = text.ifBlank { " " }
         val lines = value.lines()
@@ -135,12 +138,22 @@ class OverlayPreviewView @JvmOverloads constructor(
 
         val cx = contentRect.left + x * contentRect.width()
         val cy = contentRect.top + y * contentRect.height()
+
+        var hPad = padX * baseScale
+        var vPad = padY * baseScale
+        var maxWidth = lines.maxOfOrNull { fillPaint.measureText(it) } ?: 0f
+        val maxBoxWidth = contentRect.width() * maxWidthFraction
+        val requestedBoxWidth = maxWidth + hPad * 2f
+        if (requestedBoxWidth > maxBoxWidth && requestedBoxWidth > 0f) {
+            val scaleDown = maxBoxWidth / requestedBoxWidth
+            fillPaint.textSize *= scaleDown
+            hPad *= scaleDown
+            vPad *= scaleDown
+            maxWidth = lines.maxOfOrNull { fillPaint.measureText(it) } ?: 0f
+        }
+
         val lineHeight = fillPaint.textSize * 1.10f
-        val widths = lines.map { fillPaint.measureText(it) }
-        val maxWidth = (widths.maxOrNull() ?: 0f)
         val textBlockHeight = lineHeight * lines.size
-        val hPad = padX * baseScale
-        val vPad = padY * baseScale
         val boxW = maxWidth + hPad * 2f
         val boxH = textBlockHeight + vPad * 2f
         val rect = RectF(cx - boxW / 2f, cy - boxH / 2f, cx + boxW / 2f, cy + boxH / 2f)
